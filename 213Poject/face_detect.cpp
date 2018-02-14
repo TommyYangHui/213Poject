@@ -27,11 +27,12 @@ int detect(std::string &json_result, const std::string &access_token) {
     std::string url = request_url + "?access_token=" + access_token;
     CURL *curl = NULL;
     CURLcode result_code;
-    int is_success;
-    curl = curl_easy_init();
+    int is_success = -1 ;
+    curl = curl_easy_init();//curl_easy_init用来初始化一个CURL的指针(有些像返回FILE类型的指针一样).
     if (curl) {
-        curl_easy_setopt(curl, CURLOPT_URL, url.data());
+        curl_easy_setopt(curl, CURLOPT_URL, url.data());//CURLOPT_URL设置访问URL
         curl_easy_setopt(curl, CURLOPT_POST, 1);
+		//curl_formadd()函数用于在组建multipart/formdata HTTP POST时添加POST选项。一次添加一个POST选项，直至添加完你所有选项。
         curl_httppost *post = NULL;
         curl_httppost *last = NULL;
         curl_formadd(&post, &last, CURLFORM_COPYNAME, "max_face_num", CURLFORM_COPYCONTENTS, "5", CURLFORM_END);
@@ -39,15 +40,19 @@ int detect(std::string &json_result, const std::string &access_token) {
         curl_formadd(&post, &last, CURLFORM_COPYNAME, "image", CURLFORM_COPYCONTENTS, "【base64_img】", CURLFORM_END);
 
         curl_easy_setopt(curl, CURLOPT_HTTPPOST, post);
+		//函数将在libcurl接收到数据后被调用，因此函数多做数据保存的功能，如处理下载文件。
         curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, callback);
+		//执行单条请求
         result_code = curl_easy_perform(curl);
         if (result_code != CURLE_OK) {
+			//curl_easy_strerror进行出错打印
             fprintf(stderr, "curl_easy_perform() failed: %s\n",
                     curl_easy_strerror(result_code));
             is_success = 1;
             return is_success;
         }
         json_result = detect_result;
+		//这个调用用来结束一个会话.与curl_easy_init配合着用
         curl_easy_cleanup(curl);
         is_success = 0;
     } else {
